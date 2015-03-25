@@ -1706,3 +1706,62 @@ describe('Raven (public API)', function() {
         });
     });
 });
+
+describe('jQuery', function () {
+    beforeEach(function() {
+        setupRaven();
+    });
+
+    afterEach(function() {
+        flushRavenState();
+    });
+
+    describe('$.event.add', function () {
+        it('should call original jQuery function', function () {
+            $('body').on('click', function () {});
+            assert.equal(spies.jQuery['event.add'].callCount, 1)
+            spies.jQuery['event.add'].reset();
+        });
+    });
+
+    describe('$.fn.ready', function () {
+        it('should call original jQuery function', function () {
+            $(function () {});
+            assert.equal(spies.jQuery['fn.ready'].callCount, 1)
+            spies.jQuery['fn.ready'].reset();
+        });
+
+        it('should capture the exception', function () {
+            var spy = this.sinon.spy();
+            this.sinon.stub(Raven, 'captureException');
+            Raven.context(spy);
+
+            assert.throws(function () {
+                $(function () { throw new Error(); });
+            });
+
+            assert.isTrue(spy.calledOnce);
+            assert.isFalse(Raven.captureException.called);
+        });
+    });
+
+    describe('$.ajax', function () {
+        it('should call original jQuery function and wrap callbacks', function () {
+            var xhr = sinon.useFakeXMLHttpRequest();
+            var options = {
+                complete: function () {},
+                error: function () {},
+                success: function () {}
+            };
+            $.ajax('://example.org', options);
+
+            assert.equal(spies.jQuery['ajax'].callCount, 1)
+            assert.isTrue(options.complete.__raven__);
+            assert.isTrue(options.error.__raven__);
+            assert.isTrue(options.success.__raven__);
+
+            spies.jQuery['ajax'].reset();
+            xhr.restore();
+        });
+    });
+});

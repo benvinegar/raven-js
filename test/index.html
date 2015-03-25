@@ -28,9 +28,22 @@
     });
     </script>
 
+    <!-- jQuery -->
+    <script src="../node_modules/jquery/dist/jquery.js"></script>
+    <script>
+    var spies = {
+      jQuery: {
+        'event.add': sinon.spy($.event, 'add'),
+        'fn.ready': sinon.spy($.fn, 'ready'),
+        'ajax': sinon.spy($, 'ajax')
+      }
+    };
+    </script>
+
     <!-- Raven -->
     <script src="../vendor/TraceKit/tracekit.js"></script>
     <script src="../src/raven.js"></script>
+    <script src="../plugins/jquery.js"></script>
 
     <!-- Tests -->
     <script src="raven.test.js"></script>
